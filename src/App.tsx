@@ -11,6 +11,8 @@ function App() {
   const [users, setUsers] = useState<any[]>([]);
   const [country, setCountry] = useState("USA");
   const [page, setPage] = useState(1);
+  const [errorCount, setErrorCount] = useState<number>(0);
+
   
   const countryCodes: { [key: string]: string } = {
     "Georgia": "GE",
@@ -25,21 +27,22 @@ function App() {
 
   type FakerType = typeof fakerEN_US | typeof fakerPL | typeof fakerKA_GE;
 
-  const generateUser = (fakerInstance: FakerType) => {
+  const generateUser = (fakerInstance: FakerType, errors: number) => {
     let _index = 1;
 
     return function() {
       return {
         index: _index++,
         id: uuid4(),
-        firstName: fakerInstance.person.firstName(),
-        middleName: fakerInstance.person.middleName(),
-        lastName: fakerInstance.person.lastName(),
-        address: generateRandomAddress(fakerInstance),
-        phoneNumber: fakerInstance.phone.number(),
+        firstName: introduceErrors(fakerInstance.person.firstName(), errors),
+        middleName: introduceErrors(fakerInstance.person.middleName(), errors),
+        lastName: introduceErrors(fakerInstance.person.lastName(), errors),
+        address: introduceErrors(generateRandomAddress(fakerInstance), errors),
+        phoneNumber: introduceErrors(fakerInstance.phone.number(), errors),
       };
     }
-  };
+};
+
 
   function generateRandomAddress(fakerInstance: FakerType): string {
     return fakerInstance.helpers.arrayElement([
@@ -62,20 +65,37 @@ function App() {
         selectedFaker = fakerEN_US;
         break;
     }
-    const generate = generateUser(selectedFaker);
+    const generate = generateUser(selectedFaker, errorCount);
     const generatedUsers = Array.from({ length: 20 }, () => generate());
     if (page === 1) {
       setUsers(generatedUsers);
     } else {
       setUsers(prevUsers => [...prevUsers, ...generatedUsers]);
     }
-  }, [country, page]);
+  }, [country, page, errorCount]);
   
 
+  const introduceErrors = (text: string, errors: number): string => {
+    const actions = [
+      (str: string) => str.slice(0, -1), 
+      (str: string) => str + String.fromCharCode(Math.floor(Math.random() * 25) + 97), 
+      (str: string) => str.slice(0, -2) + str.charAt(str.length - 1) + str.charAt(str.length - 2),
+    ];
+    
+    let modifiedText = text;
+  
+    for (let i = 0; i < errors; i++) {
+      const action = actions[Math.floor(Math.random() * actions.length)];
+      modifiedText = action(modifiedText);
+    }
+  
+    return modifiedText;
+  };
+  
   return (
     <div className="App">
       <Navbar githubLink='https://github.com/shotiko13/Fake-Data-Generation' />
-      <Controls />
+      <Controls errorCount={errorCount} setErrorCount={setErrorCount} users={users} />
       
         <div className="mb-3">
           <CountryDropdown handleCountryChange={handleCountryChange} />
