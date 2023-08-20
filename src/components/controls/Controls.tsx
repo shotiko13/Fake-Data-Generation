@@ -42,7 +42,6 @@ const Controls: React.FC<ControlsProps> = ({ errorCount, setErrorCount, users}) 
       <table className="table table-bordered">
         <tbody>
           <tr>
-            <td><CountryDropdown handleCountryChange={(value) => setCountry(value)} /></td>
             <SeedSlider handleSliderChange={setErrorCount} currentSeed={errorCount} maxErrors={MAX_ERRORS}/>
             <td><button className="btn btn-success" onClick={handleRandomSeed}>Random Seed</button></td>
             <button className="btn btn-primary" onClick={() => downloadCSV(users, "users.csv")}>Export CSV</button>
